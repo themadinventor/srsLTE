@@ -1140,6 +1140,44 @@ LIBLTE_ERROR_ENUM liblte_mme_unpack_drx_parameter_ie(uint8** ie_ptr, LIBLTE_MME_
 }
 
 /*********************************************************************
+    IE Name: EDRX Parameter
+
+    Description: Indicates whether the UE uses EDRX mode or not.
+
+    Document Reference: TBD
+                        TBD
+*********************************************************************/
+LIBLTE_ERROR_ENUM liblte_mme_pack_edrx_parameter_ie(LIBLTE_MME_EDRX_PARAMETER_STRUCT* edrx_param, uint8** ie_ptr)
+{
+  LIBLTE_ERROR_ENUM err = LIBLTE_ERROR_INVALID_INPUTS;
+
+  if (edrx_param != NULL && ie_ptr != NULL) {
+    (*ie_ptr)[0] = 1; // size
+    (*ie_ptr)[1] |= (edrx_param->paging_time_window & 0x0f) << 4;
+    (*ie_ptr)[1] |= edrx_param->edrx_value & 0x0f;
+    *ie_ptr += 2;
+
+    err = LIBLTE_SUCCESS;
+  }
+
+  return (err);
+}
+LIBLTE_ERROR_ENUM liblte_mme_unpack_edrx_parameter_ie(uint8** ie_ptr, LIBLTE_MME_EDRX_PARAMETER_STRUCT* edrx_param)
+{
+  LIBLTE_ERROR_ENUM err = LIBLTE_ERROR_INVALID_INPUTS;
+
+  if (ie_ptr != NULL && edrx_param != NULL) {
+    edrx_param->paging_time_window            = ((*ie_ptr)[1] >> 4) & 0x0F;
+    edrx_param->edrx_value                    = ((*ie_ptr)[1]) & 0x0F;
+    *ie_ptr += 2;
+
+    err = LIBLTE_SUCCESS;
+  }
+
+  return (err);
+}
+
+/*********************************************************************
     IE Name: EMM Cause
 
     Description: Indicates the reason why an EMM request from the UE
@@ -4637,6 +4675,13 @@ LIBLTE_ERROR_ENUM liblte_mme_pack_attach_accept_msg(LIBLTE_MME_ATTACH_ACCEPT_MSG
       liblte_mme_pack_gprs_timer_3_ie(&attach_accept->t3412_ext, &msg_ptr);
     }
 
+    // eDRX parameter
+    if (attach_accept->edrx_param_present) {
+      *msg_ptr = LIBLTE_MME_EDRX_PARAMETER_IEI;
+      msg_ptr++;
+      liblte_mme_pack_edrx_parameter_ie(&attach_accept->edrx_param, &msg_ptr);
+    }
+
     // Fill in the number of bytes used
     msg->N_bytes = msg_ptr - msg->msg;
 
@@ -5111,6 +5156,13 @@ LIBLTE_ERROR_ENUM liblte_mme_pack_attach_request_msg(LIBLTE_MME_ATTACH_REQUEST_M
       msg_ptr++;
     }
 
+    // eDRX parameter
+    if (attach_req->edrx_param_present) {
+      *msg_ptr = LIBLTE_MME_EDRX_PARAMETER_IEI;
+      msg_ptr++;
+      liblte_mme_pack_edrx_parameter_ie(&attach_req->edrx_param, &msg_ptr);
+    }
+
     // Fill in the number of bytes used
     msg->N_bytes = msg_ptr - msg->msg;
 
@@ -5277,6 +5329,20 @@ LIBLTE_ERROR_ENUM liblte_mme_unpack_attach_request_msg(LIBLTE_BYTE_MSG_STRUCT*  
       attach_req->old_guti_type_present = true;
     } else {
       attach_req->old_guti_type_present = false;
+    }
+
+    // MS network feature support
+    if ((LIBLTE_MME_MS_NETWORK_FEATURE_SUPPORT_IEI << 4) == (*msg_ptr & 0xf0)) {
+      msg_ptr++;
+    }
+
+    // eDRX Parameter
+    if (LIBLTE_MME_EDRX_PARAMETER_IEI == *msg_ptr) {
+      msg_ptr++;
+      liblte_mme_unpack_edrx_parameter_ie(&msg_ptr, &attach_req->edrx_param);
+      attach_req->edrx_param_present = true;
+    } else {
+      attach_req->edrx_param_present = false;
     }
 
     err = LIBLTE_SUCCESS;

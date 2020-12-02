@@ -231,6 +231,18 @@ bool nas::handle_imsi_attach_request_unknown_ue(uint32_t                        
   nas_ctx->m_ecm_ctx.enb_ue_s1ap_id = enb_ue_s1ap_id;
   nas_ctx->m_ecm_ctx.mme_ue_s1ap_id = s1ap->get_next_mme_ue_s1ap_id();
 
+  if (attach_req.edrx_param_present) {
+    srslte::console("eDRX parameters: edrx=%u, ptw=%u\n", attach_req.edrx_param.edrx_value, attach_req.edrx_param.paging_time_window);
+    nas_log->info("eDRX parameters: edrx=%u, ptw=%u\n", attach_req.edrx_param.edrx_value, attach_req.edrx_param.paging_time_window);
+    nas_ctx->m_emm_ctx.edrx_requested = true;
+    nas_ctx->m_emm_ctx.edrx_value = attach_req.edrx_param.edrx_value;
+    nas_ctx->m_emm_ctx.paging_time_window = attach_req.edrx_param.paging_time_window;
+  } else {
+    srslte::console("eDRX parameters not present\n");
+    nas_log->info("eDRX parameters not present\n");
+    nas_ctx->m_emm_ctx.edrx_requested = false;
+  }
+
   // Save UE network capabilities
   memcpy(
       &nas_ctx->m_sec_ctx.ue_network_cap, &attach_req.ue_network_cap, sizeof(LIBLTE_MME_UE_NETWORK_CAPABILITY_STRUCT));
@@ -391,6 +403,18 @@ bool nas::handle_guti_attach_request_unknown_ue(uint32_t                        
   for (uint i = 0; i < MAX_ERABS_PER_UE; i++) {
     nas_ctx->m_esm_ctx[i].state   = ERAB_DEACTIVATED;
     nas_ctx->m_esm_ctx[i].erab_id = i;
+  }
+
+  if (attach_req.edrx_param_present) {
+    srslte::console("eDRX parameters: edrx=%u, ptw=%u\n", attach_req.edrx_param.edrx_value, attach_req.edrx_param.paging_time_window);
+    nas_log->info("eDRX parameters: edrx=%u, ptw=%u\n", attach_req.edrx_param.edrx_value, attach_req.edrx_param.paging_time_window);
+    nas_ctx->m_emm_ctx.edrx_requested = true;
+    nas_ctx->m_emm_ctx.edrx_value = attach_req.edrx_param.edrx_value;
+    nas_ctx->m_emm_ctx.paging_time_window = attach_req.edrx_param.paging_time_window;
+  } else {
+    srslte::console("eDRX parameters not present\n");
+    nas_log->info("eDRX parameters not present\n");
+    nas_ctx->m_emm_ctx.edrx_requested = false;
   }
 
   // Store temporary ue context
@@ -928,7 +952,7 @@ bool nas::handle_attach_request(srslte::byte_buffer_t* nas_rx)
 bool nas::handle_authentication_response(srslte::byte_buffer_t* nas_rx)
 {
   srslte::byte_buffer_t*                        nas_tx;
-  LIBLTE_MME_AUTHENTICATION_RESPONSE_MSG_STRUCT auth_resp;
+  LIBLTE_MME_AUTHENTICATION_RESPONSE_MSG_STRUCT auth_resp = {};
   bool                                          ue_valid = true;
 
   // Get NAS authentication response
@@ -1386,7 +1410,7 @@ bool nas::pack_attach_accept(srslte::byte_buffer_t* nas_buffer)
 {
   m_nas_log->info("Packing Attach Accept\n");
 
-  LIBLTE_MME_ATTACH_ACCEPT_MSG_STRUCT                               attach_accept;
+  LIBLTE_MME_ATTACH_ACCEPT_MSG_STRUCT                               attach_accept = {};
   LIBLTE_MME_ACTIVATE_DEFAULT_EPS_BEARER_CONTEXT_REQUEST_MSG_STRUCT act_def_eps_bearer_context_req;
 
   // Get decimal MCC and MNC
@@ -1492,6 +1516,15 @@ bool nas::pack_attach_accept(srslte::byte_buffer_t* nas_buffer)
   act_def_eps_bearer_context_req.apn_ambr_present          = false;
   act_def_eps_bearer_context_req.esm_cause_present         = false;
   act_def_eps_bearer_context_req.connectivity_type_present = false;
+
+  if (m_emm_ctx.edrx_requested) {
+    m_nas_log->info("[eDRX] Including eDRX parameters in Attach Accept\n");
+    attach_accept.edrx_param_present = true;
+    attach_accept.edrx_param.edrx_value = m_emm_ctx.edrx_value;
+    attach_accept.edrx_param.paging_time_window = m_emm_ctx.paging_time_window;
+  } else {
+    m_nas_log->info("[eDRX] No eDRX parameters");
+  }
 
   uint8_t sec_hdr_type = 2;
   m_sec_ctx.dl_nas_count++;

@@ -660,6 +660,25 @@ LIBLTE_ERROR_ENUM liblte_mme_pack_drx_parameter_ie(LIBLTE_MME_DRX_PARAMETER_STRU
 LIBLTE_ERROR_ENUM liblte_mme_unpack_drx_parameter_ie(uint8** ie_ptr, LIBLTE_MME_DRX_PARAMETER_STRUCT* drx_param);
 
 /*********************************************************************
+    IE Name: EDRX Parameter
+
+    Description: Indicates whether the UE uses EDRX mode or not.
+
+    Document Reference: TBD
+                        TBD
+*********************************************************************/
+// Defines
+// Enums
+// Structs
+typedef struct {
+  uint8 edrx_value;
+  uint8 paging_time_window;
+} LIBLTE_MME_EDRX_PARAMETER_STRUCT;
+// Functions
+LIBLTE_ERROR_ENUM liblte_mme_pack_edrx_parameter_ie(LIBLTE_MME_EDRX_PARAMETER_STRUCT* edrx_param, uint8** ie_ptr);
+LIBLTE_ERROR_ENUM liblte_mme_unpack_edrx_parameter_ie(uint8** ie_ptr, LIBLTE_MME_EDRX_PARAMETER_STRUCT* edrx_param);
+
+/*********************************************************************
     IE Name: EMM Cause
 
     Description: Indicates the reason why an EMM request from the UE
@@ -2470,6 +2489,7 @@ typedef struct {
   LIBLTE_MME_ADDITIONAL_UPDATE_RESULT_ENUM      additional_update_result;
   uint8                                         eps_attach_result;
   uint8                                         emm_cause;
+  LIBLTE_MME_EDRX_PARAMETER_STRUCT              edrx_param;
   bool                                          guti_present;
   bool                                          lai_present;
   bool                                          ms_id_present;
@@ -2481,6 +2501,7 @@ typedef struct {
   bool                                          eps_network_feature_support_present;
   bool                                          additional_update_result_present;
   bool                                          t3412_ext_present;
+  bool                                          edrx_param_present;
 } LIBLTE_MME_ATTACH_ACCEPT_MSG_STRUCT;
 // Functions
 LIBLTE_ERROR_ENUM liblte_mme_pack_attach_accept_msg(LIBLTE_MME_ATTACH_ACCEPT_MSG_STRUCT* attach_accept,
@@ -2560,6 +2581,8 @@ LIBLTE_ERROR_ENUM liblte_mme_unpack_attach_reject_msg(LIBLTE_BYTE_MSG_STRUCT*   
 #define LIBLTE_MME_VOICE_DOMAIN_PREF_AND_UE_USAGE_SETTING_IEI 0x5D
 #define LIBLTE_MME_ATTACH_REQUEST_DEVICE_PROPERTIES_IEI 0xD
 #define LIBLTE_MME_GUTI_TYPE_IEI 0xE
+#define LIBLTE_MME_MS_NETWORK_FEATURE_SUPPORT_IEI 0xC
+#define LIBLTE_MME_EDRX_PARAMETER_IEI 0x6E
 // Enums
 // Structs
 typedef struct {
@@ -2582,6 +2605,7 @@ typedef struct {
   LIBLTE_MME_GUTI_TYPE_ENUM                                old_guti_type;
   uint32                                                   old_p_tmsi_signature;
   uint8                                                    eps_attach_type;
+  LIBLTE_MME_EDRX_PARAMETER_STRUCT                         edrx_param;
   bool                                                     old_p_tmsi_signature_present;
   bool                                                     additional_guti_present;
   bool                                                     last_visited_registered_tai_present;
@@ -2596,6 +2620,7 @@ typedef struct {
   bool                                                     voice_domain_pref_and_ue_usage_setting_present;
   bool                                                     device_properties_present;
   bool                                                     old_guti_type_present;
+  bool                                                     edrx_param_present;
 } LIBLTE_MME_ATTACH_REQUEST_MSG_STRUCT;
 // Functions
 LIBLTE_ERROR_ENUM liblte_mme_pack_attach_request_msg(LIBLTE_MME_ATTACH_REQUEST_MSG_STRUCT* attach_req,

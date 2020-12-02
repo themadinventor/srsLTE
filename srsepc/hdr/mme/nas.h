@@ -86,6 +86,10 @@ typedef struct {
   uint8_t                attach_type;
   struct in_addr         ue_ip;
   srslte::gtpc_f_teid_ie sgw_ctrl_fteid;
+
+  bool                   edrx_requested;
+  uint8_t                edrx_value;
+  uint8_t                paging_time_window;
 } emm_ctx_t;
 
 typedef struct {
